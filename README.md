@@ -1,0 +1,2 @@
+# homelab
+Basic Homelab Configuration
