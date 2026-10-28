@@ -1,0 +1,167 @@
+- name: Servizi
+  columns:
+  - size: small
+    widgets:
+    - type: server-stats
+      title: Ambiente Glance
+      servers:
+      - type: local
+        name: Risorse visibili a Glance
+        hide-mountpoints-by-default: true
+        mountpoints:
+          /:
+            name: Filesystem Glance
+            hide: false
+    - type: monitor
+      title: Problemi HTTP
+      cache: 1m
+      show-failing-only: true
+      sites: &id001
+      - url: 
+        icon: sh:jellyfin
+        title: Jellyfin
+      - url: 
+        icon: sh:jellyseerr
+        title: Seerr
+      - url: 
+        icon: sh:jellystat
+        title: Jellystat
+      - url: 
+        icon: sh:qbittorrent
+        title: qBittorrent
+      - url: 
+        icon: sh:sonarr
+        title: Sonarr
+      - url: 
+        icon: sh:radarr
+        title: Radarr
+      - url: 
+        icon: sh:lidarr
+        title: Lidarr
+      - url: 
+        icon: sh:bazarr
+        title: Bazarr
+      - url: 
+        icon: sh:prowlarr
+        title: Prowlarr
+  - size: full
+    widgets:
+    - type: docker-containers
+      title: Media
+      cache: 30s
+      hide-by-default: true
+      running-only: false
+      containers:
+        jellyfin:
+          name: Jellyfin
+          hide: false
+          url:  
+          icon: sh:jellyfin
+        seerr:
+          name: Seerr
+          hide: false
+          url: 
+          icon: sh:jellyseerr
+        jellystat:
+          name: Jellystat
+          hide: false
+          url: 
+          icon: sh:jellystat
+          id: jellystat
+        jellystat-db:
+          name: PostgreSQL
+          hide: false
+          parent: jellystat
+    - type: docker-containers
+      title: Download e automazione
+      cache: 30s
+      hide-by-default: true
+      running-only: false
+      containers:
+        qbittorrent:
+          name: qBittorrent
+          hide: false
+          url: 
+          icon: sh:qbittorrent
+        sonarr:
+          name: Sonarr
+          hide: false
+          url: 
+          icon: sh:sonarr
+        radarr:
+          name: Radarr
+          hide: false
+          url: 
+          icon: sh:radarr
+        lidarr:
+          name: Lidarr
+          hide: false
+          url: 
+          icon: sh:lidarr
+        bazarr:
+          name: Bazarr
+          hide: false
+          url: 
+          icon: sh:bazarr
+        prowlarr:
+          name: Prowlarr
+          hide: false
+          url: 
+          icon: sh:prowlarr
+        arr-gluetun-1:
+          name: Gluetun
+          hide: false
+          icon: sh:gluetun
+        flaresolverr:
+          name: FlareSolverr
+          hide: false
+          icon: sh:flaresolverr
+    - type: docker-containers
+      title: Cloud
+      cache: 30s
+      hide-by-default: true
+      running-only: false
+      containers:
+        nextcloud-aio-nextcloud:
+          name: Nextcloud
+          hide: false
+          url:
+          icon: sh:nextcloud
+          id: nextcloud
+          description: Cloud 
+        nextcloud-aio-mastercontainer:
+          name: Nextcloud AIO
+          hide: false
+          icon: sh:nextcloud
+          url: 
+          description: Amministrazione AIO (HTTPS)
+    - type: docker-containers
+      title: Infrastruttura
+      cache: 30s
+      hide-by-default: true
+      running-only: false
+      containers:
+        nginx-proxy-manager:
+          name: Nginx Proxy Manager
+          url: 
+          hide: false
+          icon: sh:nginx-proxy-manager
+        glance:
+          name: Glance
+          hide: false
+          url: 
+          icon: sh:glance
+        docmost-docmost-1:
+          name: Docmost
+          hide: false
+          url: 
+          icon: sh:docmost
+  - size: small
+    widgets:
+    - type: monitor
+      title: Risposta dei servizi
+      cache: 1m
+      style: compact
+      sites: *id001
+    - type: html
+      title: Statistiche applicative
