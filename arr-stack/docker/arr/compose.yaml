@@ -1,0 +1,173 @@
+networks:
+  servarrnetwork:
+    name: servarrnetwork
+    ipam:
+      config:
+        - subnet: 172.25.0.0/24
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      VPN_SERVICE_PROVIDER: ${PROVIDER}
+      VPN_TYPE: ${PROTOCOL}
+      WIREGUARD_PRIVATE_KEY: ${PRIVATE_KEY:?Chiave WireGuard mancante}
+      SERVER_COUNTRIES: ${COUNTRIES}
+      BLOCK_MALICIOUS: "on"
+      VPN_PORT_FORWARDING: "on"
+      TZ: ${TZ}
+      PORT_FORWARD_ONLY: "on"
+      VPN_PORT_FORWARDING_UP_COMMAND: >-
+        /bin/sh -c 'wget -O- -nv --retry-connrefused
+        --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}"
+        http://127.0.0.1:8080/api/v2/app/setPreferences'
+      VPN_PORT_FORWARDING_DOWN_COMMAND: >-
+        /bin/sh -c 'wget -O- -nv --retry-connrefused
+        --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}"
+        http://127.0.0.1:8080/api/v2/app/setPreferences'
+    networks:
+      servarrnetwork:
+        ipv4_address: ${IP_GLUETUN}
+    ports:
+      - "${LAN_BIND_IP}:${QBITTORRENT_PORT}:8080" # qbittorrent web interface
+      - "${LAN_BIND_IP}:${PROWLARR_PORT}:9696" # prowlarr
+    volumes:
+      - ./gluetun:/gluetun
+    healthcheck:
+      test: ["CMD", "/gluetun-entrypoint", "healthcheck"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=8080 # must match "qbittorrent web interface" port number in gluetun's service above
+    volumes:
+      - ./qbittorrent:/config
+      - ${QBITTORRENT_DIR}:/data/downloads/qbittorrent
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    network_mode: service:gluetun
+    healthcheck:
+      test: ping -c 1 www.google.com || exit 1
+      interval: 60s
+      retries: 3
+      start_period: 20s
+      timeout: 10s
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./prowlarr:/config
+    restart: unless-stopped
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    network_mode: service:gluetun
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TZ}
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    network_mode: service:gluetun
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./sonarr:/config
+      - ${DATA_DIR}:/data
+    ports:
+      - "${LAN_BIND_IP}:${SONARR_PORT}:8989"
+    networks:
+      servarrnetwork:
+        ipv4_address: ${IP_SONARR}
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./radarr:/config
+      - ${DATA_DIR}:/data
+    ports:
+      - "${LAN_BIND_IP}:${RADARR_PORT}:7878"
+    networks:
+      servarrnetwork:
+        ipv4_address: ${IP_RADARR}
+
+  lidarr:
+    container_name: lidarr
+    image: lscr.io/linuxserver/lidarr:latest
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./lidarr:/config
+      - ${DATA_DIR}:/data
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - "${LAN_BIND_IP}:${LIDARR_PORT}:8686"
+    networks:
+      servarrnetwork:
+        ipv4_address: ${IP_LIDARR}
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./bazarr:/config
+      - ${DATA_DIR}:/data
+    ports:
+      - "${LAN_BIND_IP}:${BAZARR_PORT}:6767"
+    networks:
+      servarrnetwork:
+        ipv4_address: ${IP_BAZARR}
