@@ -75,4 +75,7 @@ This enable Intel QuickSync.
 **Note:** ${JWT_SECRET} can be generated with `openssl`.
 ```bash
 openssl rand -hex 32
+```
+
 ---
+```
