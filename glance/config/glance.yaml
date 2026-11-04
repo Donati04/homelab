@@ -2,9 +2,12 @@ server:
   assets-path: /app/assets
 
 theme:
+  background-color: 225 14 15
+  primary-color: 157 47 65
+  contrast-multiplier: 1.1
   # Note: assets are cached by the browser, changes to the CSS file
   # will not be reflected until the browser cache is cleared (Ctrl+F5)
-  custom-css-file: /assets/user.css
+  #custom-css-file: /assets/user.css
 
 pages:
   # It's not necessary to create a new file for each page and include it, you can simply
